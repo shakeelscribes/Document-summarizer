@@ -1,6 +1,3 @@
-openai==0.28.0
-pandas
-numpy
-streamlit
-python-dotenv
-google.generativeai
+streamlit 
+groq 
+python_dotenv
