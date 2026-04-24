@@ -1,4 +1,5 @@
 import os
+import fitz  # PyMuPDF
 import streamlit as st
 from groq import Groq
 from dotenv import load_dotenv
@@ -52,7 +53,7 @@ def apply_ultra_theme():
             box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
             width: 100%;
         }
-        
+
         .stButton>button:hover {
             transform: scale(1.02);
             box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
@@ -60,7 +61,7 @@ def apply_ultra_theme():
             color: white;
         }
 
-        /* Content Cards - Specifically targeting the inner container */
+        /* Content Cards */
         .custom-card {
             background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(12px);
@@ -80,12 +81,28 @@ def apply_ultra_theme():
         </style>
     """, unsafe_allow_html=True)
 
+
+def extract_file_content(uploaded_file) -> str:
+    """Extract plain text from txt, csv, or pdf uploads."""
+    if uploaded_file.type == "application/pdf":
+        pdf_bytes = uploaded_file.read()
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        pages_text = [page.get_text() for page in doc]
+        doc.close()
+        return "\n\n".join(pages_text)
+    else:
+        return uploaded_file.read().decode("utf-8")
+
+
 def summarize_text_stream(text):
     try:
         return client.chat.completions.create(
             messages=[
-                {"role": "system", "content": "You are BriefMind. Provide an elite, executive-level summary with clear headings and emojis."},
-                {"role": "user", "content": f"Summarize this:\n\n{text}"}
+                {
+                    "role": "system",
+                    "content": "You are BriefMind. Provide an elite, executive-level summary with clear headings and emojis.",
+                },
+                {"role": "user", "content": f"Summarize this:\n\n{text}"},
             ],
             model="llama-3.3-70b-versatile",
             temperature=0.3,
@@ -94,6 +111,7 @@ def summarize_text_stream(text):
     except Exception as e:
         st.error(f"Error: {e}")
         return None
+
 
 def main():
     st.set_page_config(page_title="BriefMind | Next-Gen AI", page_icon="🧠", layout="wide")
@@ -107,40 +125,58 @@ def main():
         st.write("🤖 **Model:** Llama 3.3 70B")
         st.write("✨ **Mode:** Scalable Stream")
         st.markdown("---")
+        st.write("📄 **Supported formats:**")
+        st.write("&nbsp;&nbsp;• TXT &nbsp;• CSV &nbsp;• PDF")
+        st.markdown("---")
         st.caption("Developed for professional document processing.")
 
     # --- HERO SECTION ---
     st.markdown("<h1 class='main-title'>BriefMind</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size: 1.2rem; color: #94a3b8;'>Executive document intelligence. Instant. Accurate. Beautiful.</p>", unsafe_allow_html=True)
+    st.markdown(
+        "<p style='font-size: 1.2rem; color: #94a3b8;'>Executive document intelligence. Instant. Accurate. Beautiful.</p>",
+        unsafe_allow_html=True,
+    )
     st.divider()
 
     # --- UPLOADER SECTION ---
-    uploaded_file = st.file_uploader("Drop your file here", type=["txt", "csv"], label_visibility="collapsed")
-    
+    uploaded_file = st.file_uploader(
+        "Drop your file here",
+        type=["txt", "csv", "pdf"],
+        label_visibility="collapsed",
+    )
+
     if uploaded_file:
-        file_content = uploaded_file.read().decode("utf-8")
-        
+        # Extract content based on file type
+        with st.spinner("Reading document..."):
+            try:
+                file_content = extract_file_content(uploaded_file)
+            except Exception as e:
+                st.error(f"Failed to read file: {e}")
+                return
+
+        if not file_content.strip():
+            st.warning("The document appears to be empty or could not be parsed.")
+            return
+
         col1, col2 = st.columns([1, 1.2], gap="large")
-        
+
         with col1:
             st.markdown("#### 📄 Document Input")
-            # Wrapping the input in a styled container
             container1 = st.container(border=True)
             with container1:
                 st.text_area("input", file_content, height=450, label_visibility="collapsed")
 
         with col2:
             st.markdown("#### 📝 Intelligence Output")
-            # Wrapping the entire output logic in one styled container
             container2 = st.container(border=True)
             with container2:
                 if st.button("✨ GENERATE INTELLIGENCE"):
                     if not GROQ_API_KEY:
-                        st.error("API Key Missing")
+                        st.error("API Key Missing — add GROQ_API_KEY to your .env file.")
                     else:
                         output_area = st.empty()
                         full_response = ""
-                        
+
                         response_stream = summarize_text_stream(file_content)
                         if response_stream:
                             for chunk in response_stream:
@@ -148,10 +184,11 @@ def main():
                                 if content:
                                     full_response += content
                                     output_area.markdown(full_response + " ▎")
-                            
+
                             output_area.markdown(full_response)
                 else:
                     st.info("Ready to summarize. Click the button above.")
+
 
 if __name__ == "__main__":
     main()

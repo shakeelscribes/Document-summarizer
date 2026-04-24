@@ -1,4 +1,3 @@
-
 <div align="center">
 
 ```
@@ -18,6 +17,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![Groq](https://img.shields.io/badge/Groq_LPU-00C7B7?style=for-the-badge&logo=groq&logoColor=white)](https://groq.com)
 [![Llama](https://img.shields.io/badge/Llama_3.3_70B-a855f7?style=for-the-badge&logo=meta&logoColor=white)](https://ai.meta.com)
+[![PyMuPDF](https://img.shields.io/badge/PyMuPDF-PDF_Support-f97316?style=for-the-badge&logo=adobeacrobatreader&logoColor=white)](https://pymupdf.readthedocs.io)
 [![License](https://img.shields.io/badge/License-MIT-f472b6?style=for-the-badge)](LICENSE)
 
 <br/>
@@ -46,7 +46,8 @@ Whether you're a researcher, analyst, executive, or student drowning in text —
 | 🧠 **Llama 3.3 70B** | State-of-the-art 70 billion parameter model for elite comprehension |
 | 🌊 **Real-Time Streaming** | Watch intelligence materialize word-by-word with live cursor feedback |
 | 🎨 **Glassmorphic UI** | Cyber-dark aesthetic with gradient accents, blurred cards, and polished typography |
-| 📄 **Multi-Format Ingestion** | Plug in `.txt` and `.csv` files — drag, drop, done |
+| 📄 **Multi-Format Ingestion** | Plug in `.txt`, `.csv`, and `.pdf` files — drag, drop, done |
+| 🔍 **Smart PDF Parsing** | PyMuPDF extracts text page-by-page from any text-based PDF with empty-doc guard |
 | 🛡️ **Secure by Design** | API key loaded via `.env` — never hardcoded, never exposed |
 | 🏗️ **Scalable Architecture** | Streamlit-powered for frictionless local or cloud deployment |
 
@@ -56,12 +57,18 @@ Whether you're a researcher, analyst, executive, or student drowning in text —
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│                    BriefMind Interface                   │
+│                    BriefMind Interface                    │
 │                                                          │
 │  ┌─────────────────┐       ┌──────────────────────────┐  │
-│  │   File Upload   │──────▶│    Streamlit Frontend    │ │
-│  │  (.txt / .csv)  │       │   (Glassmorphic Theme)   │  │
-│  └─────────────────┘       └─────────────┬────────────┘  │
+│  │   File Upload   │──────▶│    Streamlit Frontend    │  │
+│  │ .txt / .csv /   │       │   (Glassmorphic Theme)   │  │
+│  │      .pdf       │       └─────────────┬────────────┘  │
+│  └─────────────────┘                     │               │
+│                             ┌────────────▼────────────┐  │
+│                             │  extract_file_content() │  │
+│                             │  TXT/CSV → decode UTF-8 │  │
+│                             │  PDF     → PyMuPDF/fitz │  │
+│                             └────────────┬────────────┘  │
 │                                          │               │
 │                             ┌────────────▼────────────┐  │
 │                             │     Groq API Client     │  │
@@ -90,6 +97,8 @@ Before you launch, make sure your system is equipped:
 - A **[Groq API Key](https://console.groq.com)** — free tier available
 - A terminal and 60 seconds of your time
 
+> ⚠️ **Note on scanned PDFs:** PyMuPDF extracts text from text-based PDFs only. Image-only / scanned PDFs require OCR (e.g. `pytesseract`) — see the roadmap.
+
 ---
 
 ## ⚙️ Installation
@@ -106,6 +115,14 @@ cd Document-summarizer
 ```bash
 pip install -r requirements.txt
 ```
+
+> Your `requirements.txt` should include:
+> ```
+> streamlit
+> groq
+> python-dotenv
+> pymupdf
+> ```
 
 ### 3 · Set Up Your Environment
 
@@ -131,7 +148,7 @@ Then open your browser at `http://localhost:8501` — and witness the future of 
 
 ```
 1.  Launch the app via Streamlit
-2.  Drop your .txt or .csv document into the upload zone
+2.  Drop your .txt, .csv, or .pdf document into the upload zone
 3.  Review your raw document in the left panel
 4.  Click  ✨ GENERATE INTELLIGENCE
 5.  Watch your executive summary materialize in real time
@@ -156,7 +173,9 @@ Document-summarizer/
 
 The current build is a high-performance MVP. Here's what's on the horizon:
 
-- [ ] 🗂️ **PDF & DOCX support** — go beyond `.txt` and `.csv`
+- [x] 🗂️ **PDF support** — text-based PDFs now fully supported via PyMuPDF
+- [ ] 🔬 **OCR for scanned PDFs** — pytesseract integration for image-only documents
+- [ ] 📝 **DOCX support** — go beyond `.txt`, `.csv`, and `.pdf`
 - [ ] 🌐 **Multi-language summaries** — break the language barrier
 - [ ] 📊 **Structured output modes** — bullet points, TLDR, or full executive brief
 - [ ] 💾 **Export to PDF/DOCX** — take your summary anywhere
@@ -171,6 +190,7 @@ The current build is a high-performance MVP. Here's what's on the horizon:
 | Layer | Technology |
 |-------|-----------|
 | **Frontend** | Streamlit + Custom CSS (Glassmorphism) |
+| **PDF Parsing** | PyMuPDF (fitz) — page-by-page text extraction |
 | **AI Model** | Llama 3.3 70B Versatile |
 | **Inference Engine** | Groq LPU Cloud |
 | **Language** | Python 3.10+ |
@@ -201,7 +221,10 @@ This project is open-source under the **MIT License**. See [LICENSE](LICENSE) fo
 
 <div align="center">
 
-**Built with ⚡ by [shakeelscribes](https://github.com/shakeelscribes)**
+**Built with ⚡ by [Mohamed Shakeel](https://github.com/shakeelscribes)**
+
+[![GitHub](https://img.shields.io/badge/github.com/shakeelscribes-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/shakeelscribes)
+[![LinkedIn](https://img.shields.io/badge/linkedin.com/in/mohamed--shakeel-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/mohamed-shakeel-720b2a29b)
 
 *Compressing the world's knowledge — one document at a time.*
 
